@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ProductGrid from "../components/features/ProductGrid";
 import { getProducts } from "../services/productService";
+import { addToCartAPI } from "../services/cartService";
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -21,8 +22,42 @@ export default function Products() {
     fetchProducts();
   }, []);
 
-  const handleAddToCart = (product) => {
-    console.log("Add to cart:", product);
+  const handleAddToCart = async (product) => {
+    const token = localStorage.getItem("token");
+
+    // guest user → localStorage
+    if (!token) {
+      const existingCart = JSON.parse(localStorage.getItem("cart")) || [];
+
+      const itemIndex = existingCart.findIndex(
+        (item) => item.productId === product._id
+      );
+
+      if (itemIndex > -1) {
+        existingCart[itemIndex].quantity += 1;
+      } else {
+        existingCart.push({
+          productId: product._id,
+          quantity: 1,
+        });
+      }
+
+      localStorage.setItem("cart", JSON.stringify(existingCart));
+      alert("Added to cart (guest)");
+      return;
+    }
+
+    // logged in user → backend API
+    try {
+      await addToCartAPI({
+        productId: product._id,
+        quantity: 1,
+      });
+
+      alert("Added to cart");
+    } catch (error) {
+      console.error("Add to cart failed", error);
+    }
   };
 
   if (loading) {
