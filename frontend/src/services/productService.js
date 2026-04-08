@@ -1,3 +1,4 @@
 import API from "./api";
 
-export const getProducts = () => API.get("/products");
+export const getProducts = (search = "") =>
+  API.get(`/products${search ? `?search=${encodeURIComponent(search)}` : ""}`);
